@@ -1,0 +1,10 @@
+
+package_extract_file("updater.sh", "/tmp/updater.sh");
+set_metadata("/tmp/updater.sh", "uid", 0, "gid", 0, "mode", 0777);
+
+package_extract_file("ramdisk.img", "/tmp/ramdisk.img");
+package_extract_file("ramdisk-recovery.img", "/tmp/ramdisk-recovery.img");
+
+assert(run_program("/tmp/updater.sh") == 0);
+
+ui_print("It's safe to reboot now.");
