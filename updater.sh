@@ -21,6 +21,7 @@
 #
 
 # log everything to /tmp/postzip.log
+set -x 
 exec >> /tmp/postzip.log 2>&1;
 
 # check mounts
@@ -45,12 +46,12 @@ check_mount() {
 copy_ramdisks() {
     # format the ramdisk partitions and copy the ramdisks to them
     /sbin/busybox umount -l /dev/block/mtdblock1
-    /tmp/erase_image ramdisk
+    /sbin/erase_image ramdisk
     check_mount /ramdisk /dev/block/mtdblock1 yaffs2
     /sbin/busybox cp /tmp/ramdisk.img /ramdisk/ramdisk.img
 
     /sbin/busybox umount -l /dev/block/mtdblock2
-    /tmp/erase_image ramdisk-recovery
+    /sbin/erase_image ramdisk-recovery
     check_mount /ramdisk-recovery /dev/block/mtdblock2 yaffs2
     /sbin/busybox cp /tmp/ramdisk-recovery.img /ramdisk-recovery/ramdisk-recovery.img
     /sbin/busybox sync
@@ -59,3 +60,5 @@ copy_ramdisks() {
     /sbin/busybox umount -l /dev/block/mtdblock1
     /sbin/busybox umount -l /dev/block/mtdblock2
 }
+
+copy_ramdisks

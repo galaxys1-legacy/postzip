@@ -24,9 +24,9 @@ fi;
 
 # If no updatezip path was given assume
 # We just want to create the postinstallzip.zip
-if [[ -f "$UPDATE_ZIP" ]]; then
+if [[ -f "$SOURCE_DIR/$UPDATE_ZIP" ]]; then
 # Start the sideload 
-adb sideload "$UPDATE_ZIP"
+adb sideload "$SOURCE_DIR/$UPDATE_ZIP"
 fi;
 
 # Extract the ramdisk
