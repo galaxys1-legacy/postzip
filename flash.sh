@@ -39,6 +39,7 @@ gunzip -c "$OUT_DIR/ramdisk.img" | cpio -iudm
 
 # Patch the ramdisk.
 cp -rf "$SDROOT/"* "$RDROOT/"
+chmod 0755 "$RDROOT/init"
 
 # We're on a tmpfs.. but just in case
 sync
