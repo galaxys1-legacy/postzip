@@ -28,9 +28,10 @@ dalvik.vm.appimageformat=lz4
 debug.atrace.tags.enableflags=0
 #
 # BOOTIMAGE_BUILD_PROPERTIES
-#
-ro.bootimage.build.date=Sat Nov 11 18:58:50 +0545 2017
+# We building from the future
+ro.bootimage.build.date=Sat Apr 1 06:09:59 +0000 2018
 ro.bootimage.build.date.utc=1510406030
+
 persist.service.adb.enable=1
 persist.service.debuggable=1
 persist.sys.root_access=3
