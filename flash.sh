@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 OUT_DIR="${SOURCE_DIR}/out/target/product/galaxysmtd/"
 
+
 # tmp dir to do our stuff
 TMPD="/tmp/postinstallzip"
 mkdir -p "$TMPD"
@@ -40,12 +41,16 @@ gunzip -c "$OUT_DIR/ramdisk.img" | cpio -iudm
 # Patch the ramdisk.
 cp -rf "$SDROOT/"* "$RDROOT/"
 chmod 0755 "$RDROOT/init"
+chmod 0755 "$RDROOT/sbin/magisk"
+
+# Patch in magisk support
+sed -i '/import \/init.usb.rc/a \
+import \/init.magisk.rc' "$RDROOT/init.rc"
 
 # We're on a tmpfs.. but just in case
 sync
 
 # Repack the ramdisk We're still in RDROOT
-# Should really use mkbootfs
 find . | cpio --create --format='newc' | gzip > ../ramdisk.img
 
 # Assemble the zip
@@ -60,6 +65,12 @@ cp -rf "$SCRIPT_DIR/updater.sh" "$ZIPIM/"
 # Prepare the zip
 cd "$ZIPIM"
 7z a "$ZIP_OUT_FILE" ./*
+
+if [[ "$2" = "test" ]]; then
+# We are testing dont prompt to flash
+printf "Sucessfully built:  $ZIP_OUT_FILE \n"
+exit 1
+fi;
 
 printf "DONT FUCKING REBOOT!! \n"
 printf "Enter any key after starting sideload again."
