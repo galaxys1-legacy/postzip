@@ -28,6 +28,7 @@ gunzip -c "$OUT_DIR/ramdisk.img" | cpio -iudm
 
 # Patch the ramdisk.
 cp -rf "$SDROOT/"* "$RDROOT/"
+mkdir "$RDROOT/acct"
 chmod 0755 "$RDROOT/init"
 chmod 0755 "$RDROOT/sbin/magisk"
 
