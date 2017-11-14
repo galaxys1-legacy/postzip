@@ -9,27 +9,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 OUT_DIR="${SOURCE_DIR}/out/target/product/galaxysmtd/"
 
-
 # tmp dir to do our stuff
 TMPD="/tmp/postinstallzip"
 mkdir -p "$TMPD"
 cd "$TMPD"
 
 ZIP_OUT_FILE="$TMPD/postinstallzip.zip"
+ZIPIM="$TMPD/zip_im"
 
-if [[ "$2" = "oops" ]]; then
-# We fucked up and pressed key accidentaly.
-adb sideload "$ZIP_OUT_FILE"
-exit 1
-fi;
-
-# If no updatezip path was given assume
-# We just want to create the postinstallzip.zip
-if [[ -f "$SOURCE_DIR/$UPDATE_ZIP" ]]; then
-# Start the sideload 
-adb sideload "$SOURCE_DIR/$UPDATE_ZIP"
-fi;
-
+prepare_ramdisk() {
 # Extract the ramdisk
 RDROOT="$TMPD/root"
 SDROOT="$SCRIPT_DIR/root"
@@ -46,35 +34,61 @@ chmod 0755 "$RDROOT/sbin/magisk"
 # Patch in magisk support
 sed -i '/import \/init.usb.rc/a \
 import \/init.magisk.rc' "$RDROOT/init.rc"
-
-# We're on a tmpfs.. but just in case
-sync
-
 # Repack the ramdisk We're still in RDROOT
 find . | cpio --create --format='newc' | gzip > ../ramdisk.img
+}
 
+
+assemble_postzip() {
 # Assemble the zip
-ZIPIM="$TMPD/zip_im"
 mkdir -p "$ZIPIM"
 rm -rf "$ZIPIM/*"
 cp -rf "$SCRIPT_DIR/META-INF" "$ZIPIM/"
 cp -f  "$TMPD/ramdisk.img" "$ZIPIM/"
 cp -f  "$SCRIPT_DIR/ramdisk-recovery.img" "$ZIPIM/"
 cp -rf "$SCRIPT_DIR/updater.sh" "$ZIPIM/"
+}
 
-# Prepare the zip
-cd "$ZIPIM"
-7z a "$ZIP_OUT_FILE" ./*
+create_postzip() {
+	cd "$ZIPIM"
+	7z a "$ZIP_OUT_FILE" ./*
+}
+
 
 if [[ "$2" = "test" ]]; then
-# We are testing dont prompt to flash
-printf "Sucessfully built:  $ZIP_OUT_FILE \n"
-exit 1
+	# We are testing dont prompt to flash
+	prepare_ramdisk
+	printf "Sucessfully built: ramdisk.img \n"
+	exit 1
 fi;
 
-printf "DONT FUCKING REBOOT!! \n"
-printf "Enter any key after starting sideload again."
+if [[ "$2" = "try" ]]; then
+	# We are trying new stuffs so build postinstallzip
+	prepare_ramdisk
+	assemble_postzip
+	create_postzip
+	printf "Sucessfully built: \n"
+	exit 1
+fi;
 
-read;
+if [[ -f "$SOURCE_DIR/$UPDATE_ZIP" ]]; then
+	prepare_ramdisk
+	assemble_postzip
+	# We want to patch the update zip
+	cp "$SOURCE_DIR/$UPDATE_ZIP" "$ZIPIM/"
+	FINAL_ZIP=$(basename "$UPDATE_ZIP")
+	# We need to be in currentdir
+	cd "$ZIPIM"
+	zip -u "$ZIPIM/$FINAL_ZIP" ramdisk.img
+	zip -u "$ZIPIM/$FINAL_ZIP" ramdisk-recovery.img
+	# Update boot.img if there is one
+	if [[ -f "$ZIPIM/boot.img" ]]; then
+		zip -u "$ZIPIM/$FINAL_ZIP" boot.img
+	fi;
+fi;
 
-adb sideload "$ZIP_OUT_FILE"
+# Sideload only if we were prompted to:
+if [[ "$2" = "flash" ]]; then
+	adb sideload 	 "$ZIPIM/$FINAL_ZIP"
+fi;
+
