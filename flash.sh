@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Usage:
+# ./galaxys/postzip/flash.sh out/target/product/galaxysmtd/lineage-14.1-2018-UNOFFICIAL-galaxysmtd.zip 
+
+
 set -e
 
 UPDATE_ZIP="$1"
